@@ -25,9 +25,28 @@ class Solution:
 
         return (dy, dx)
     
+    def getC(self, x, y, slope):
+        # c = y - mx
+        # c = y - (dy/dx)*x
+        # c = (y*dx - dy*x)/dx
+   
+            # Handle vertical line (slope = ('inf', 0))
+        if slope[0] == 'inf':
+            # For vertical lines, use x as the intercept
+            return (x, 1)
+        
+        c_upper = (y * slope[1]) - (slope[0] * x)
+        c_lower = slope[1]
+        
+        gcd_c = gcd(c_upper, c_lower)
+        c = (c_upper // gcd_c, c_lower // gcd_c)
+
+        return c
+
     def countTrapezoids(self, points: List[List[int]]) -> int:
 
-        gradients_map = {}
+        c_list = {}
+        m_and_c_map = {}
 
         # Calculate slope between every pair of points
         for first_point in range(len(points)):
@@ -39,54 +58,53 @@ class Solution:
                 x1 = points[first_point][0]
 
                 slope = self.getSlope(x1, y1, x2, y2)
-
-                gradients_map[slope] = gradients_map.get(slope, [])
+                c = self.getC(x1, y1, slope)
 
                 # store the indexes of two points that form the this slope
-                gradients_map[slope].append((first_point, second_point))
+                m_and_c_map[(slope, c)] = m_and_c_map.get((slope, c), set())
+                m_and_c_map[(slope, c)].add(first_point)
+                m_and_c_map[(slope, c)].add(second_point)
+
+                # Store C values of each slope
+                c_list[slope] = c_list.get(slope, set())
+                c_list[slope].add(c)
 
         trapezoid_count = 0
         pararel_count = 0
 
-        for slope in gradients_map:
-            total_segment = len(gradients_map[slope])
+        for slope in c_list:
+            total_c = len(c_list[slope])
 
-            for i in range(total_segment):
-                for j in range(i + 1, total_segment):
-                    segment1 = gradients_map[slope][i]
-                    segment2 = gradients_map[slope][j]
+            for i in range(total_c):
+                for j in range(i + 1, total_c):
+                    c1 = list(c_list[slope])[i]
+                    c2 = list(c_list[slope])[j]
 
-                    # check if all 4 points are distinct
-                    a, b = segment1
-                    c, d = segment2
+                    points_mc1 = m_and_c_map[(slope, c1)]
+                    points_mc2 = m_and_c_map[(slope, c2)]
+
+                    # count the trapezoids that can be formed using these two lines
+                    combination_mc_1 = len(points_mc1)
+                    combination_mc_1 = combination_mc_1 * (combination_mc_1 - 1) // 2
+
+                    combination_mc_2 = len(points_mc2)
+                    combination_mc_2 = combination_mc_2 * (combination_mc_2 - 1) // 2
+                    trapezoid_count += combination_mc_1 * combination_mc_2
+
+                    # count the parallelograms that can be formed using these two lines
+                    vector_count = {}
+                    for p1 in points_mc1:
+                        for p2 in points_mc2:
+                            vec = (points[p2][0] - points[p1][0], points[p2][1] - points[p1][1])
+                            vector_count[vec] = vector_count.get(vec, 0) + 1
                     
-                    if a == c or a == d or b == c or b == d:
-                        continue
-                    
-                    # check if both segments not in the same line by checking random cross pair not have same gradient
-                    x1, y1 = points[a] # a
-                    x2, y2 = points[b] # b
+                    for vec in vector_count:
+                        k = vector_count[vec]
+                        if k >= 2:
+                            pararel_count += k * (k - 1) // 2
 
-                    x3, y3 = points[c] # c
-                    x4, y4 = points[d] # d
-
-                    slope_ac = self.getSlope(x1, y1, x3, y3)
-                    
-                    if slope_ac == slope:
-                        continue
-                    
-                    trapezoid_count += 1
-                    
-                    #check if this trapezoid are parallelogram
-                    slope_ad = self.getSlope(x1, y1, x4, y4)
-                    slope_bc = self.getSlope(x2, y2, x3, y3)
-                    slope_bd = self.getSlope(x2, y2, x4, y4)
-
-                    if (slope_ac == slope_bd) or (slope_ad == slope_bc):
-                        pararel_count += 1
-
-        result = trapezoid_count - pararel_count/2
-        return int(result)
+        result = trapezoid_count - pararel_count // 2
+        return result
 
 
 if __name__ == "__main__":
