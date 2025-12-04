@@ -30,7 +30,7 @@ class Solution:
         # c = y - (dy/dx)*x
         # c = (y*dx - dy*x)/dx
    
-            # Handle vertical line (slope = ('inf', 0))
+        # Handle vertical line (slope = ('inf', 0))
         if slope[0] == 'inf':
             # For vertical lines, use x as the intercept
             return (x, 1)
@@ -73,15 +73,19 @@ class Solution:
         pararel_count = 0
 
         for slope in c_list:
-            total_c = len(c_list[slope])
+            c_values = list(c_list[slope])
+            total_c = len(c_values)
 
             for i in range(total_c):
                 for j in range(i + 1, total_c):
-                    c1 = list(c_list[slope])[i]
-                    c2 = list(c_list[slope])[j]
+                    c1 = c_values[i]
+                    c2 = c_values[j]
 
-                    points_mc1 = m_and_c_map[(slope, c1)]
-                    points_mc2 = m_and_c_map[(slope, c2)]
+                    points_mc1 = list(m_and_c_map[(slope, c1)])
+                    points_mc2 = list(m_and_c_map[(slope, c2)])
+
+                    if len(points_mc1) < 2 or len(points_mc2) < 2:
+                        continue
 
                     # count the trapezoids that can be formed using these two lines
                     combination_mc_1 = len(points_mc1)
