@@ -13,7 +13,6 @@ class Solution:
 
 
         count += (high-low)//2
-        
-
+      
         return count
         
